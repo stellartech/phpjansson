@@ -624,12 +624,13 @@ PHP_METHOD(jansson, to_stream)
 static size_t
 _jansson_from_stream_callback(void *inp_buf, size_t inn_len, void *inp_data)
 {
-#ifdef ZTS
-    TSRMLS_D = p_res->TSRMLS_C;
-#endif    
     size_t read = 0;
     jansson_stream_resource_t *p_res = 
             (jansson_stream_resource_t*)inp_data;
+#ifdef ZTS
+    TSRMLS_D = p_res->TSRMLS_C;
+#endif    
+
     read = php_stream_read(p_res->p_stream, inp_buf, inn_len TSRMLS_CC);
     p_res->byte_count += read;    
     return read;   
