@@ -543,20 +543,19 @@ typedef struct _jansson_stream_resource {
     json_t          *p_json;
     php_stream      *p_stream;
     php_jansson_t   *p_this;
-#ifdef ZTS    
     TSRMLS_D;
-#endif
 } jansson_stream_resource_t;
 
 static int
 _jansson_to_stream_callback(const char *inp_buf, size_t inn_len, void *inp_data)
 {
-#ifdef ZTS
-    TSRMLS_D = p_res->TSRMLS_C;
-#endif    
+
     size_t written = 0;
     jansson_stream_resource_t *p_res = 
             (jansson_stream_resource_t*)inp_data;
+#ifdef ZTS
+    TSRMLS_D = p_res->TSRMLS_C;
+#endif    
     
     while(written < inn_len) {
         size_t remaining = inn_len - written;
