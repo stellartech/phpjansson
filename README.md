@@ -27,6 +27,8 @@ See the tests/basic.phpt unit test file for instructions on how to use the PHP c
 
 INI settings:-
 
+    extension=jansson.so
+    
     [jansson]
     use_php_memory=1
 
