@@ -25,3 +25,15 @@ See the tests/basic.phpt unit test file for instructions on how to use the PHP c
     make install
     make test TESTS=.  [optional]
 
+INI settings:-
+
+    [jansson]
+    use_php_memory=1
+
+By default Jansson uses PHP's request cycle memory for it's allocations thus
+limiting how much memory can be used for a Jansson object to that limited to 
+your PHP request process. Setting this to 0 (zero) allows Jansson to use
+standard malloc/free memory allocation and therefore removing PHP's memory 
+limit and only restricting you to your server's memory limitations. Note,
+this INI setting can only be set system wide and not a run time. An Apache/FPM
+full restart is required when changing this setting.
