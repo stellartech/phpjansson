@@ -330,6 +330,7 @@ PHPAPI zend_class_entry *p_ce_jansson;
 
 static ZEND_MODULE_GLOBALS_CTOR_D(jansson)
 {
+    jansson_globals->seed = 0;
     jansson_globals->use_php_memory = 1;
 }
 
@@ -797,7 +798,6 @@ zend_function_entry jansson_methods[] =
     PHP_FE_END
 };
 
-
 static void
 jansson_free_object_storage_handler(php_jansson_t *inp_intern TSRMLS_DC)
 {
@@ -838,6 +838,8 @@ jansson_create_object_handler(zend_class_entry *inp_class_type TSRMLS_DC)
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("jansson.use_php_memory", "1", PHP_INI_SYSTEM,        
         OnUpdateLong, use_php_memory, zend_jansson_globals, jansson_globals)
+    STD_PHP_INI_ENTRY("jansson.seed", "0", PHP_INI_SYSTEM,        
+        OnUpdateLong, seed, zend_jansson_globals, jansson_globals)
 PHP_INI_END()
 
 
@@ -853,7 +855,7 @@ PHP_MINIT_FUNCTION(jansson)
         json_set_alloc_funcs(jansson_malloc, jansson_free);
     }
     
-    json_object_seed(0);
+    json_object_seed(JANSSON_G(seed));
     
     INIT_NS_CLASS_ENTRY(tmp_ce, PHP_JANSSON_NS, "Jansson", jansson_methods);
     

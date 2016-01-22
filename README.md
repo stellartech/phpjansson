@@ -30,7 +30,12 @@ INI settings:-
     extension=jansson.so
     
     [jansson]
+    seed=0
     use_php_memory=1
+
+Jansson seeds it's random number generator for the key hashing. A seed of zero
+ensures this. However, if you want to disable this and provide a known seed
+for repeatability (such as unit testing) then you can set the seed value.
 
 By default Jansson uses PHP's request cycle memory for it's allocations thus
 limiting how much memory can be used for a Jansson object to that limited to 
