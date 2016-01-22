@@ -39,6 +39,7 @@ extern PHPAPI zend_class_entry *jansson_constructor_exception_ce;
 #endif
 
 ZEND_BEGIN_MODULE_GLOBALS(jansson)
+    long seed;
     long use_php_memory;
 ZEND_END_MODULE_GLOBALS(jansson)
 
