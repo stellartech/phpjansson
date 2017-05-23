@@ -645,7 +645,7 @@ jansson_clone_object(zval *inp_zval)
     zend_object_clone_members(&p_new_intern->std, &p_intern->std);
     p_new_intern->p_json = json_deep_copy(p_intern->p_json);
 
-    return p_new_intern;
+    return p_new_obj;
 }
 
 static zend_object
