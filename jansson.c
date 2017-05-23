@@ -74,9 +74,10 @@ php_jansson_dtor(php_jansson_t **inpp)
 }
 
 static php_jansson_t*
-php_jansson_ctor(TSRMLS_C)
+php_jansson_ctor(zend_class_entry *inp_class_type TSRMLS_C)
 {
-    php_jansson_t *p_jansson = emalloc(sizeof(php_jansson_t) + sizeof(zend_class_entry));
+    php_jansson_t *p_jansson = ecalloc(1, sizeof(php_jansson_t) 
+		+ zend_object_properties_size(inp_class_type));
     if(p_jansson) {
         memset(p_jansson, 0, sizeof(php_jansson_t));
         p_jansson->p_json = json_object();
@@ -652,7 +653,7 @@ static zend_object
 jansson_create_object_handler(zend_class_entry *inp_class_type TSRMLS_DC)
 {
     zend_object retval;
-    php_jansson_t *p_intern = php_jansson_ctor(TSRMLS_CC);
+    php_jansson_t *p_intern = php_jansson_ctor(inp_class_type TSRMLS_CC);
 
     zend_object_std_init(&p_intern->std, inp_class_type);
     object_properties_init(&p_intern->std, inp_class_type);
