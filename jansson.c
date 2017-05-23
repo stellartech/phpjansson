@@ -20,6 +20,12 @@
 #include "config.h"
 #endif
 
+// wip 
+// General : https://wiki.php.net/phpng-upgrading
+// Classes and objects : 
+//	http://jpauli.github.io/2015/03/24/zoom-on-php-objects.html
+//	http://jpauli.github.io/2016/01/14/php-7-objects.html
+
 #include <php_jansson.h>
 #include <php_ini.h>
 #include <ext/standard/info.h>
@@ -40,9 +46,9 @@ PHPAPI zend_class_entry *jansson_constructor_exception_ce;
 
 typedef struct _php_jansson_t
 {
-    zend_object         std;
     json_t		*p_json;
     size_t              mysize;
+    zend_object         std;
 } php_jansson_t;
 
 static void 
@@ -70,7 +76,7 @@ php_jansson_dtor(php_jansson_t **inpp)
 static php_jansson_t*
 php_jansson_ctor(TSRMLS_C)
 {
-    php_jansson_t *p_jansson = emalloc(sizeof(php_jansson_t));
+    php_jansson_t *p_jansson = emalloc(sizeof(php_jansson_t) + sizeof(zend_class_entry));
     if(p_jansson) {
         memset(p_jansson, 0, sizeof(php_jansson_t));
         p_jansson->p_json = json_object();
@@ -82,9 +88,16 @@ php_jansson_ctor(TSRMLS_C)
     return p_jansson;
 }
 
+static inline php_jansson_t*
+jansson_from_obj(zend_object *obj) {
+	return (php_jansson_t*)((char*)(obj) - XtOffsetOf(php_jansson_t, std));
+}
+
+#define Z_JANSSON_P(zv) jansson_from_obj(Z_OBJ_P((zv)))
+
 // Forward static declarations.
 static json_t* 
-jansson_encode_zval_to_jansson(zval **inpp_zval TSRMLS_DC);
+jansson_encode_zval_to_jansson(zval *inp_zval TSRMLS_DC);
 
 static inline void* 
 jansson_malloc(size_t len) 
@@ -99,229 +112,47 @@ jansson_free(void *block)
 }
 
 static json_t* 
-jansson_encode_zval_object_to_jansson(zval **inpp_zval TSRMLS_DC) 
+jansson_encode_zval_object_to_jansson(zval *inp_zval TSRMLS_DC) 
 {
-    if(Z_TYPE_PP(inpp_zval) != IS_OBJECT) {
-        return NULL;
-    }
-    
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, 
-        "Cannot yet convert an object.");
-    
-    // ToDo (if object type is Jansson\jannson then copy, otherwise NULL)
     return NULL;
 }
 
 static json_t* 
-jansson_encode_zval_array_to_jansson(zval **inpp_zval TSRMLS_DC) 
+jansson_encode_zval_array_to_jansson(zval *inp_zval TSRMLS_DC) 
 {
-    zval **pp_zval;
-    char *p_key = NULL;
-    json_t *p_json;  
-    HashTable *p_hash;
-    HashPosition position;
-    
-    if(Z_TYPE_PP(inpp_zval) != IS_ARRAY) {
-        return NULL;
-    }
-    
-    if((p_json = json_object()) == NULL) {
-        return NULL;
-    }
-    
-    p_hash = Z_ARRVAL_PP(inpp_zval);
-
-    if(zend_hash_num_elements(p_hash) == 0) {
-        return p_json;
-    }
-            
-    zend_hash_internal_pointer_reset_ex(p_hash, &position);
-            
-    while(zend_hash_get_current_data_ex(
-            p_hash, (void**)&pp_zval, &position) == SUCCESS) {
-                
-        zend_uint klen = 0;
-        zend_ulong kidx = 0L;
-        p_key = NULL;
-                
-        int res = zend_hash_get_current_key_ex(p_hash, 
-                    &p_key, &klen, &kidx, DUPLICATE_KEY, &position);
-                
-        switch(res) {
-        case HASH_KEY_IS_STRING:
-            if(klen < 1) {
-                goto jansson_encode_zval_array_to_jansson_bailout;
-            }
-            if(json_object_set_new(p_json, p_key, 
-                jansson_encode_zval_to_jansson(pp_zval TSRMLS_CC)) != SUCCESS) {
-                goto jansson_encode_zval_array_to_jansson_bailout;
-            }
-            break;
-        case HASH_KEY_IS_LONG: {
-            char tmp[32] = {0};
-            snprintf((char*)&tmp, 32, "%d", kidx);
-            if(json_object_set_new(p_json, (const char*)&tmp, 
-                jansson_encode_zval_to_jansson(pp_zval TSRMLS_CC)) != SUCCESS) {
-                goto jansson_encode_zval_array_to_jansson_bailout;
-            }}
-            break;                    
-        default:
-            /* Should never happen. */
-            json_decref(p_json);
-            if(p_key) efree(p_key);
-            return NULL;
-        }
-              
-        if(p_key) {
-            efree(p_key);
-        }
-              
-        zend_hash_move_forward_ex(p_hash, &position);
-    }
-    
-    return p_json;
-    
-    jansson_encode_zval_array_to_jansson_bailout:
-    if(p_key) efree(p_key);
-    if(p_json) json_decref(p_json);
     return NULL;
 }
 
 static json_t* 
-jansson_encode_zval_to_jansson(zval **inpp_zval TSRMLS_DC) 
+jansson_encode_zval_to_jansson(zval *inp_zval TSRMLS_DC) 
 {	
-    switch (Z_TYPE_PP(inpp_zval)) {
-    case IS_STRING:
-        return json_stringn(Z_STRVAL_PP(inpp_zval), Z_STRLEN_PP(inpp_zval));
-    case IS_LONG:
-        return json_integer(Z_LVAL_PP(inpp_zval));
-    case IS_NULL:
-        return json_null();    
-    case IS_DOUBLE:
-        return json_real(Z_DVAL_PP(inpp_zval));    
-    case IS_BOOL:
-        return json_boolean(Z_BVAL_PP(inpp_zval));
-    case IS_ARRAY: 
-        return jansson_encode_zval_array_to_jansson(inpp_zval TSRMLS_CC);    
-    case IS_OBJECT: 
-        return jansson_encode_zval_object_to_jansson(inpp_zval TSRMLS_CC);    
-    default:
-        return NULL;
-    }
     return NULL;
 }
 
 static zval*
 jansson_to_zval(json_t **inpp_json TSRMLS_DC)
 {
-    const char *p_key;
-    size_t nkey;
-    json_t *p_json;
-    
-    zval *p_retval = EG(uninitialized_zval_ptr);
-    
-    if(!inpp_json || !(*inpp_json)) {
-        Z_ADDREF_P(p_retval);
-        return p_retval;
-    }
-    
-    switch(json_typeof(*inpp_json)) {
-        case JSON_STRING:
-            ALLOC_INIT_ZVAL(p_retval);
-            ZVAL_STRINGL(p_retval, json_string_value(*inpp_json),
-                    json_string_length(*inpp_json), DUPLICATE_VAL);
-            break;
-        case JSON_INTEGER:
-            ALLOC_INIT_ZVAL(p_retval);
-            ZVAL_LONG(p_retval, json_integer_value(*inpp_json));
-            break;
-        case JSON_REAL:
-            ALLOC_INIT_ZVAL(p_retval);
-            ZVAL_DOUBLE(p_retval, json_real_value(*inpp_json));
-            break;
-        case JSON_NULL:
-            Z_ADDREF_P(p_retval);
-            break;
-        case JSON_TRUE:
-        case JSON_FALSE:
-            ALLOC_INIT_ZVAL(p_retval);
-            ZVAL_BOOL(p_retval, json_boolean_value(*inpp_json));
-            break;
-        case JSON_OBJECT:
-            ALLOC_INIT_ZVAL(p_retval);
-            array_init(p_retval);
-            json_object_foreach(*inpp_json, p_key, p_json) {
-                add_assoc_zval(p_retval, p_key, 
-                        jansson_to_zval(&p_json TSRMLS_CC));
-            }
-            break;
-        case JSON_ARRAY:
-            ALLOC_INIT_ZVAL(p_retval);
-            array_init(p_retval);
-            json_array_foreach(*inpp_json, nkey, p_json) {
-                add_index_zval(p_retval, nkey, 
-                        jansson_to_zval(&p_json TSRMLS_CC));
-            }
-            break;
-        default:
-            php_error_docref(NULL TSRMLS_CC, E_WARNING , 
-                "jansson_to_zval(): No type at line %d", __LINE__);
-            
-    }
-    
-    return p_retval;
+    return NULL;
 }
 
 static json_t* 
 jansson_add_zval_to_jansson(json_t *inp_json, const char *inp_key, 
-        zval **inpp_zval TSRMLS_DC) 
+        zval *inp_zval TSRMLS_DC) 
 {
-    json_t *p_json;
-    
-    if(!json_is_object(inp_json)) {
-        return NULL;
-    }
-    
-    if((p_json = jansson_encode_zval_to_jansson(inpp_zval TSRMLS_CC)) == NULL) {
-        return NULL;
-    }
-    
-    if(json_object_set_new(inp_json, inp_key, p_json) != SUCCESS) {
-        json_decref(p_json);
-        return NULL;
-    }
-    
-    return inp_json;
+    return NULL;
 }
 
 static json_t* 
 jansson_add_zval_to_jansson_ex(json_t *inp_json, const char *inp_key, 
-        int inn_len, zval **inpp_zval TSRMLS_DC) 
+        int inn_len, zval *inp_zval TSRMLS_DC) 
 {
-    if(inn_len > 0) {
-        const char *p_tmp = estrndup(inp_key, inn_len);
-        if(p_tmp) {
-            json_t *p_json = jansson_add_zval_to_jansson(inp_json, p_tmp, 
-                                inpp_zval TSRMLS_CC);
-            efree((char*)p_tmp);
-            return p_json;
-        }
-    }    
     return NULL;
 }
 
 static zend_bool
 jansson_add_zval(json_t *inp_json, zval *inp_key, 
-        zval **inpp_zval TSRMLS_DC) 
+        zval *inp_zval TSRMLS_DC) 
 {
-    if(Z_TYPE_P(inp_key) == IS_STRING) {
-        if(jansson_add_zval_to_jansson_ex(inp_json,
-                Z_STRVAL_P(inp_key), Z_STRLEN_P(inp_key), 
-                inpp_zval TSRMLS_CC) != NULL) 
-        {
-            return SUCCESS;
-        }
-    }    
     return FAILURE;
 }
 
@@ -378,7 +209,7 @@ PHP_METHOD(jansson, count)
         return;
     }
     
-    p_this = (php_jansson_t*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    p_this = Z_JANSSON_P(getThis());
     if(!p_this || !p_this->p_json || json_typeof(p_this->p_json) != JSON_OBJECT) {
         return;
     }
@@ -401,7 +232,7 @@ PHP_METHOD(jansson, has)
         RETURN_FALSE;
     }
     
-    p_this = (php_jansson_t*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    p_this = Z_JANSSON_P(getThis());
     if(!p_this) {
         return;
     }
@@ -432,9 +263,8 @@ PHP_METHOD(jansson, get)
         RETURN_FALSE;
     }
     
-    if((p_this = (php_jansson_t*)zend_object_store_get_object(
-            getThis() TSRMLS_CC)) != NULL) 
-    {
+    p_this = Z_JANSSON_P(getThis());
+    if(p_this != NULL) {
         p_json = jansson_get_value(p_this->p_json, inp_key, klen TSRMLS_CC);
         if(p_json == NULL) {
             if(use_exception) {
@@ -471,9 +301,8 @@ PHP_METHOD(jansson, del)
         RETURN_FALSE;
     }
     
-    if((p_this = (php_jansson_t*)zend_object_store_get_object(
-            getThis() TSRMLS_CC)) != NULL) 
-    {
+    p_this = Z_JANSSON_P(getThis());
+    if(p_this != NULL) { 
         char *p_key = estrndup(inp_key, klen);
         rval = json_object_del(p_this->p_json, p_key);
         efree(p_key);
@@ -493,9 +322,8 @@ PHP_METHOD(jansson, to_array)
         RETURN_FALSE;
     }
     
-    if((p_this = (php_jansson_t*)zend_object_store_get_object(
-            getThis() TSRMLS_CC)) != NULL) 
-    {
+    p_this = Z_JANSSON_P(getThis());
+    if(p_this != NULL) {
         if((p_zval = jansson_to_zval(&p_this->p_json TSRMLS_CC)) != NULL) {
             ZVAL_ZVAL(return_value, p_zval, 0, 1);
         }
@@ -519,13 +347,13 @@ PHP_METHOD(jansson, set)
         RETURN_FALSE;
     }
     
-    p_json = jansson_encode_zval_to_jansson(&inp_zval TSRMLS_CC);
+    p_json = jansson_encode_zval_to_jansson(inp_zval TSRMLS_CC);
     if(!p_json) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING , "jansson_encode_zval_to_jansson() failed");
         RETURN_FALSE;
     }
     
-    p_this = (php_jansson_t*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    p_this = Z_JANSSON_P(getThis());
     if(!p_this) {
         json_decref(p_json);
         RETURN_FALSE;
@@ -544,9 +372,9 @@ typedef struct _jansson_stream_resource {
     json_t          *p_json;
     php_stream      *p_stream;
     php_jansson_t   *p_this;
-    TSRMLS_D;
 } jansson_stream_resource_t;
 
+#ifdef NO_STREAM
 static int
 _jansson_to_stream_callback(const char *inp_buf, size_t inn_len, void *inp_data)
 {
@@ -584,14 +412,14 @@ PHP_METHOD(jansson, to_stream)
         RETURN_FALSE;
     }
     
-    php_stream_from_zval(resource.p_stream, &inp_zval_dst);
+    php_stream_from_zval(resource.p_stream, inp_zval_dst);
     if(!resource.p_stream) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, 
             "Parameter is not a stream");
         RETURN_FALSE;
     }
     
-    resource.p_this = (php_jansson_t*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    resource.p_this = Z_JANSSON_P(getThis());
     if(!resource.p_this) {
         RETURN_FALSE;
     }
@@ -638,18 +466,18 @@ _jansson_from_stream_callback(void *inp_buf, size_t inn_len, void *inp_data)
 }
 
 static zend_bool
-_jansson_from_stream(zval **inpp_zval_src, size_t flags, 
+_jansson_from_stream(zval *inp_zval_src, size_t flags, 
         zval *return_value, zval *this_ptr, int with_warn TSRMLS_DC)
 {
     json_t *p_json;
     json_error_t err;
     jansson_stream_resource_t resource;
     
-    if(Z_TYPE_PP(inpp_zval_src) != IS_RESOURCE) {
+    if(Z_TYPE_P(inp_zval_src) != IS_RESOURCE) {
         return;
     }
     
-    php_stream_from_zval(resource.p_stream, inpp_zval_src);
+    php_stream_from_zval(resource.p_stream, inp_zval_src);
     if(!resource.p_stream) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING , 
             "Parameter is not a stream");
@@ -659,7 +487,7 @@ _jansson_from_stream(zval **inpp_zval_src, size_t flags,
         return FAILURE;
     }
     
-    resource.p_this = (php_jansson_t*)zend_object_store_get_object(getThis() TSRMLS_CC);
+    resource.p_this = Z_JANSSON_P(getThis());
     if(!resource.p_this) {
         if(return_value) {
             RETURN_FALSE;
@@ -716,24 +544,25 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_from_stream, 0, 0, 1)
 ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, from_stream)
 {
-    zval **inpp_zval_src;
+    zval *inp_zval_src;
     size_t flags = 0;
     
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z|l", 
-            &inpp_zval_src, &flags) == FAILURE) {
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|l", 
+            &inp_zval_src, &flags) == FAILURE) {
         RETURN_FALSE;
     }
     
-    _jansson_from_stream(inpp_zval_src, 
+    _jansson_from_stream(inp_zval_src, 
             flags, return_value, getThis(), 0 TSRMLS_CC);
 }
+#endif /* NO_STREAM */
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_construct, 0, 0, 1)
     ZEND_ARG_INFO(0, array)
 ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, __construct)
 {
-    zval **inpp_zval = NULL;
+    zval *inp_zval = NULL;
 
     return_value = getThis();
     
@@ -741,28 +570,27 @@ PHP_METHOD(jansson, __construct)
         return;
     }
     else {    
-        if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", 
-                &inpp_zval) == FAILURE) {
+        if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", 
+                &inp_zval) == FAILURE) {
             return;
         }
         
-        if(!inpp_zval) {
+        if(!inp_zval) {
             return;
         }
     }
     
-    if(inpp_zval && Z_TYPE_PP(inpp_zval) == IS_RESOURCE) {
-        if(_jansson_from_stream(inpp_zval, 0, NULL, getThis(), 0 TSRMLS_CC) != SUCCESS) {
+    if(inp_zval && Z_TYPE_P(inp_zval) == IS_RESOURCE) {
+        if(_jansson_from_stream(inp_zval, 0, NULL, getThis(), 0 TSRMLS_CC) != SUCCESS) {
             zend_throw_exception(jansson_constructor_exception_ce, 
                 "Jansson::__construct() failed to load from stream", 0 TSRMLS_CC);
         }
     }
-    else if(inpp_zval && Z_TYPE_PP(inpp_zval) == IS_ARRAY) {
+    else if(inp_zval && Z_TYPE_P(inp_zval) == IS_ARRAY) {
         json_t *p_json;
         php_jansson_t *p_this;
         
-        p_this = (php_jansson_t*)
-                zend_object_store_get_object(getThis() TSRMLS_CC);
+        p_this = Z_JANSSON_P(getThis());
         if(!p_this) {
             return;
         }
@@ -770,7 +598,7 @@ PHP_METHOD(jansson, __construct)
             json_decref(p_this->p_json);
             p_this->p_json = NULL;
         }
-        p_json = jansson_encode_zval_array_to_jansson(inpp_zval TSRMLS_CC);    
+        p_json = jansson_encode_zval_array_to_jansson(inp_zval TSRMLS_CC);    
         p_this->p_json = p_json ? p_json : json_object();
     }
 }
@@ -791,46 +619,44 @@ zend_function_entry jansson_methods[] =
             arginfo_jansson_method_set, ZEND_ACC_PUBLIC)                
     PHP_ME(jansson, to_array, 
             arginfo_jansson_method_to_array, ZEND_ACC_PUBLIC)                        
-    PHP_ME(jansson, to_stream, 
-            arginfo_jansson_method_to_stream, ZEND_ACC_PUBLIC)                
-    PHP_ME(jansson, from_stream, 
-            arginfo_jansson_method_from_stream, ZEND_ACC_PUBLIC)                        
+    //PHP_ME(jansson, to_stream, 
+    //        arginfo_jansson_method_to_stream, ZEND_ACC_PUBLIC)                
+    //PHP_ME(jansson, from_stream, 
+    //        arginfo_jansson_method_from_stream, ZEND_ACC_PUBLIC)                        
     PHP_FE_END
 };
 
 static void
-jansson_free_object_storage_handler(php_jansson_t *inp_intern TSRMLS_DC)
+jansson_free_object_storage_handler(zend_object *p_obj)
 {
-    zend_object_std_dtor(&inp_intern->std TSRMLS_CC);
-    php_jansson_dtor(&inp_intern);
+    php_jansson_t *p_intern = jansson_from_obj(p_obj);
+    zend_object_std_dtor(&p_intern->std);
+    php_jansson_dtor(&p_intern);
 }
 
-static void 
-jansson_clone_object_storage_handler(
-        php_jansson_t *inp, 
-        php_jansson_t **outpp TSRMLS_DC) 
+zend_object*
+jansson_clone_object(zval *inp_zval)
 {
-    php_jansson_t *p_clone = php_jansson_ctor(TSRMLS_C);
-    zend_object_std_init(&p_clone->std, inp->std.ce TSRMLS_CC);
-    object_properties_init(&p_clone->std, inp->std.ce);
-    p_clone->p_json = json_deep_copy(inp->p_json);
-    *outpp = p_clone;
+    php_jansson_t *p_intern, *p_new_intern;
+    zend_object *p_new_obj;
+
+    p_intern = Z_JANSSON_P(inp_zval);
+    p_new_obj = jansson_ce->create_object(Z_OBJCE_P(inp_zval));
+    zend_object_clone_members(&p_new_intern->std, &p_intern->std);
+    p_new_intern->p_json = json_deep_copy(p_intern->p_json);
+
+    return p_new_intern;
 }
 
-static zend_object_value
+static zend_object
 jansson_create_object_handler(zend_class_entry *inp_class_type TSRMLS_DC)
 {
-    zend_object_value retval;
+    zend_object retval;
     php_jansson_t *p_intern = php_jansson_ctor(TSRMLS_CC);
-    zend_object_std_init(&p_intern->std, inp_class_type TSRMLS_CC);
+
+    zend_object_std_init(&p_intern->std, inp_class_type);
     object_properties_init(&p_intern->std, inp_class_type);
-    retval.handle = zend_objects_store_put(
-        p_intern,
-        (zend_objects_store_dtor_t)zend_objects_destroy_object,
-        (zend_objects_free_object_storage_t)jansson_free_object_storage_handler,
-        (zend_objects_store_clone_t)jansson_clone_object_storage_handler
-        TSRMLS_CC
-    );
+    p_intern->std.handlers = &jansson_object_handlers;
     retval.handlers = &jansson_object_handlers;
     return retval;
 }
@@ -861,19 +687,18 @@ PHP_MINIT_FUNCTION(jansson)
     
     jansson_ce = zend_register_internal_class(&tmp_ce TSRMLS_CC);
     zend_class_implements(jansson_ce TSRMLS_CC, 1, spl_ce_Countable);
-    
-    jansson_ce->create_object = jansson_create_object_handler;
-    
-    memcpy(&jansson_object_handlers, zend_get_std_object_handlers(), 
-            sizeof(zend_object_handlers));
-    
+    memcpy(&jansson_object_handlers, zend_get_std_object_handlers(),
+        sizeof(zend_object_handlers));
+    jansson_object_handlers.clone_obj = jansson_clone_object;
+    jansson_object_handlers.free_obj = jansson_free_object_storage_handler;
+
     INIT_CLASS_ENTRY(tmp_ce, "JanssonGetException", NULL);
     jansson_get_exception_ce = zend_register_internal_class_ex(
-            &tmp_ce, p_exception_ce, NULL TSRMLS_CC);
+            &tmp_ce, p_exception_ce);
     
     INIT_CLASS_ENTRY(tmp_ce, "JanssonConstructorException", NULL);
     jansson_constructor_exception_ce = zend_register_internal_class_ex(
-            &tmp_ce, p_exception_ce, NULL TSRMLS_CC);
+            &tmp_ce, p_exception_ce);
     
     zend_declare_class_constant_long(jansson_ce, 
             ZEND_STRL("JSON_COMPACT"), 
