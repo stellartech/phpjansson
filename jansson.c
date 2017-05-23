@@ -223,7 +223,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_has, 0, 0, 1)
 ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, has)
 {
-    int   klen;
+    size_t   klen;
     char *inp_key;
     json_t *p_json;
     php_jansson_t *p_this;
@@ -251,7 +251,7 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, get)
 {
     zval *p_zval;
-    int   klen;
+    size_t  klen;
     char *inp_key;
     json_t *p_json;
     zend_bool use_exception = 1;
@@ -292,7 +292,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_del, 0, 0, 1)
 ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, del)
 {
-    int  klen = 0;
+    size_t klen = 0;
     long rval = 0;
     char *inp_key;
     php_jansson_t *p_this;
@@ -337,7 +337,7 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_set, 0, 0, 1)
 ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, set)
 {
-    int  klen = 0;
+    size_t klen = 0;
     char *inp_key;
     zval *inp_zval;
     json_t *p_json;
