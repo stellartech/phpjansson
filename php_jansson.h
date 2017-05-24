@@ -27,7 +27,7 @@ extern zend_module_entry jansson_module_entry;
 extern PHPAPI zend_class_entry *jansson_get_exception_ce;
 extern PHPAPI zend_class_entry *jansson_constructor_exception_ce;
 
-#define PHP_JANSSON_VERSION "0.1.0"
+#define PHP_JANSSON_VERSION "1.0.0"
 #define PHP_JANSSON_NS	"Jansson"
 
 #ifdef PHP_WIN32

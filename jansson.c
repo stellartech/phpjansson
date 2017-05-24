@@ -865,7 +865,8 @@ PHP_MSHUTDOWN_FUNCTION(jansson)
 PHP_MINFO_FUNCTION(jansson)
 {
     php_info_print_table_start();
-    php_info_print_table_header(2, "Version", PHP_JANSSON_VERSION);
+    php_info_print_table_header(2, "PECL Version", PHP_JANSSON_VERSION);
+    php_info_print_table_row(2, "Jansson Version", JANSSON_VERSION);
     DISPLAY_INI_ENTRIES();
 }
 
