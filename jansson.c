@@ -350,10 +350,9 @@ PHP_METHOD(jansson, has)
     json_t *p_json;
     php_jansson_t *p_this;
     
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", 
-            &inp_key, &klen) == FAILURE) {
-        RETURN_FALSE;
-    }
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STRING(inp_key, klen)
+    ZEND_PARSE_PARAMETERS_END();
     
     p_this = Z_JANSSON_P(getThis());
     if(!p_this) {
@@ -379,13 +378,12 @@ PHP_METHOD(jansson, get)
     zend_bool use_exception = 1;
     php_jansson_t *p_this;
     
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|b", 
-            &inp_key, &klen, &use_exception) == FAILURE) {
-        zend_throw_exception(jansson_get_exception_ce, 
-            "Jansson::get() invalid paramers", 0 TSRMLS_CC);
-        RETURN_FALSE;
-    }
- 
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+        Z_PARAM_STRING(inp_key, klen)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_BOOL(use_exception)
+    ZEND_PARSE_PARAMETERS_END();
+
     p_this = Z_JANSSON_P(getThis());
     if(p_this != NULL) {
         p_json = jansson_get_value(p_this->p_json, inp_key, klen TSRMLS_CC);
@@ -419,11 +417,10 @@ PHP_METHOD(jansson, del)
     char *inp_key;
     php_jansson_t *p_this;
     
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", 
-            &inp_key, &klen) == FAILURE || klen == 0) {
-        RETURN_FALSE;
-    }
-    
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STRING(inp_key, klen)
+    ZEND_PARSE_PARAMETERS_END();
+
     p_this = Z_JANSSON_P(getThis());
     if(p_this != NULL) { 
         char *p_key = estrndup(inp_key, klen);
@@ -465,11 +462,11 @@ PHP_METHOD(jansson, set)
     json_t *p_json;
     php_jansson_t *p_this;
     
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", 
-            &inp_key, &klen, &inp_zval) == FAILURE || klen == 0) {
-        RETURN_FALSE;
-    }
-    
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STRING(inp_key, klen)
+        Z_PARAM_ZVAL(inp_zval)
+    ZEND_PARSE_PARAMETERS_END();
+
     p_json = jansson_encode_zval_to_jansson(inp_zval TSRMLS_CC);
     if(!p_json) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING , "jansson_encode_zval_to_jansson() failed");
@@ -526,14 +523,17 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(jansson, to_stream)
 {
     zval *inp_zval_dst;
-    long flags = JSON_COMPACT, indent = 0, precision = 0;
+    zend_long flags = JSON_COMPACT, indent = 0, precision = 0;
     jansson_stream_resource_t resource;
     
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|lll", 
-            &inp_zval_dst, &flags, &indent, &precision) == FAILURE) {
-        RETURN_FALSE;
-    }
-    
+    ZEND_PARSE_PARAMETERS_START(1, 4)
+        Z_PARAM_RESOURCE(inp_zval_dst)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(flags)
+        Z_PARAM_LONG(indent)
+        Z_PARAM_LONG(precision)
+    ZEND_PARSE_PARAMETERS_END();
+
     php_stream_from_zval(resource.p_stream, inp_zval_dst);
     if(!resource.p_stream) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, 
