@@ -20,12 +20,6 @@
 #include "config.h"
 #endif
 
-// wip 
-// General : https://wiki.php.net/phpng-upgrading
-// Classes and objects : 
-//	http://jpauli.github.io/2015/03/24/zoom-on-php-objects.html
-//	http://jpauli.github.io/2016/01/14/php-7-objects.html
-
 #include <php_jansson.h>
 #include <php_ini.h>
 #include <ext/standard/info.h>
