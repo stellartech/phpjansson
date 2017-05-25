@@ -138,7 +138,6 @@ will output thus:-
 ```
 <?php
 use Jansson\Jansson;
-$a = ['foo' => 'bar'];
 $j = new Jansson;
 $s = '{"foo":"bar"}';
 $j->unserialize($s);
