@@ -114,9 +114,15 @@ Jansson also supports ::to\_array() to convert it's internal state into a PHP ar
 
 See the jansson.php file which is designed to assist your IDE with hints and tool tips.
 
-### ToDo.
+### Serialize
 
-Support the Serializable interface (since the to\_\* and from\_\* natively methods do this for Json).
+Jansson supports Jansson::serialize() and Jansson::unserialize()
+
+__Note__, this is not serialize/unserialize to PHP values. The serialization is done using JSON notation.
+
+These allow writing the contents to/from PHP value strings only rather than streams or arrays.
+
+### ToDo.
 
 Support debug info such as print\_r() and var\_export.
 

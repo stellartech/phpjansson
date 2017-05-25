@@ -688,6 +688,51 @@ PHP_METHOD(jansson, from_stream)
             flags, return_value, Z_JANSSON_P(getThis()), 0 TSRMLS_CC);
 }
 
+
+ZEND_BEGIN_ARG_INFO(arginfo_jansson_method_serialize, 0)
+    ZEND_ARG_INFO(0, serialized)
+ZEND_END_ARG_INFO()
+PHP_METHOD(jansson, serialize)
+{
+    const char *p;
+    php_jansson_t *p_this;
+    zend_long flags = JSON_COMPACT;
+
+    if((p_this = Z_JANSSON_P(getThis())) == NULL) {
+        RETURN_FALSE;
+    }
+
+    if((p = json_dumps(p_this->p_json, flags)) == NULL) {
+        RETURN_FALSE;
+    }
+    
+    RETURN_STRING(p);
+}
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_unserialize, 0, 0, 1)
+    ZEND_ARG_INFO(0, string)
+ZEND_END_ARG_INFO()
+PHP_METHOD(jansson, unserialize)
+{
+    size_t klen = 0;
+    long rval = 0;
+    char *inp_string;
+    json_error_t err;
+    php_jansson_t *p_this;
+    
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_STRING(inp_string, klen)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if((p_this = Z_JANSSON_P(getThis())) == NULL) {
+        return;
+    }
+
+    if(p_this->p_json) json_decref(p_this->p_json);
+    p_this->p_json = json_loads(inp_string, 0, &err);
+}
+
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_construct, 0, 0, 1)
     ZEND_ARG_INFO(0, array)
 ZEND_END_ARG_INFO()
@@ -754,6 +799,10 @@ zend_function_entry jansson_methods[] =
             arginfo_jansson_method_to_stream, ZEND_ACC_PUBLIC)                
     PHP_ME(jansson, from_stream, 
             arginfo_jansson_method_from_stream, ZEND_ACC_PUBLIC)                        
+    PHP_ME(jansson, serialize, 
+            arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)                        
+    PHP_ME(jansson, unserialize, 
+            arginfo_jansson_method_unserialize, ZEND_ACC_PUBLIC)                        
     PHP_FE_END
 };
 
@@ -815,6 +864,7 @@ PHP_MINIT_FUNCTION(jansson)
     ce.create_object = jansson_create_object_handler;
     jansson_ce = zend_register_internal_class(&ce TSRMLS_CC);
     zend_class_implements(jansson_ce TSRMLS_CC, 1, spl_ce_Countable);
+    zend_class_implements(jansson_ce TSRMLS_CC, 1, spl_ce_Serializable);
     memcpy(&jansson_object_handlers, zend_get_std_object_handlers(),
         sizeof(zend_object_handlers));
     jansson_object_handlers.clone_obj = jansson_clone_object;
