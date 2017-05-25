@@ -170,7 +170,6 @@ jansson_encode_zval_array_to_jansson(zval *inp_zval TSRMLS_DC)
 static json_t* 
 jansson_encode_zval_to_jansson(zval *inp_zval TSRMLS_DC) 
 {
-    again:
     while(1) {
         switch(Z_TYPE_P(inp_zval)) {
         case IS_STRING: 
