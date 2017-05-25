@@ -38,7 +38,7 @@ class Jansson
      * @param mixed $init Used to set key/value pairs
      * @throws JanssonConstructorException
      *
-     * @\Jansson\Jansson\__construct()
+     * @\Jansson\Jansson::__construct()
      *
      * @return Jansson object
      */
@@ -46,8 +46,17 @@ class Jansson
     
     /**
      * Test to see if a key/value pair exists.
+     *
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson(STDIN);
+     * if($j->has('foo')) echo "foo was a valid key\n";
+     * ```
      * 
      * @param string $key
+     *
+     * @\Jansson\Jansson::has()
+     *
      * @return bool true if $key exists or false otherwise.
      */
     public function has($key) {}
@@ -56,14 +65,33 @@ class Jansson
      * Implements the Countable interface. Returns the number
      * of top level key/value pairs (not including any sub-objects).
      * 
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson(STDIN);
+     * $i = $j->count();
+     * echo "stdin brought $i keys to teh party\n";
+     * ```
+     *
+     * @\Jansson\Jansson::count()
+     *
      * @return integer
      */
     public function count() {}
     
     /**
      * Set a key/value pair
+     *
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $j->set('foo', 'bar');
+     * $j->to_stream(STDOUT);
+     * ```
      * 
      * @param string $key
+     *
+     * @\Jansson\Jansson::set()
+     *
      * @param mixed $value
      */
     public function set($key, $value) {}
@@ -72,9 +100,27 @@ class Jansson
      * Get a value for a key. If $exc is true (default) this method
      * will throw an exception if the key is not found. Setting $exc 
      * to false will inhibit this. Then on key not found returns null.
+     * Note, JSON has a defined NULL type. Use exceptions if JSON NULL
+     * types are expected otherwise telling the difference between a
+     * valid of invalid value is not possible as this method will return
+     * PHP null if not found and not using exceptions.
      * 
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson(STDIN);
+     * try {
+     *     $var = $j->get('foo');
+           echo $var;
+     * } 
+     * catch(JanssonGetException $e) {
+     *     echo "key 'foo' didn't exist\n";
+     * }
+     * ```
      * @param string $key
      * @param bool $exc
+     *
+     * @\Jansson\Jansson::get()
+     *
      * @return mixed value
      * @throws JanssonGetException if key does not exist
      */
@@ -83,18 +129,56 @@ class Jansson
     /**
      * Delete a key/value pair.
      * 
-     * @param string $string
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $j->set('foo', 'bar');
+     * echo "Have {$j->count()} keys"; // "Have 1 keys"
+     * $j->del('foo');
+     * echo "Have {$j->count()} keys"; // "Have 0 keys"
+     * ```
+     *
+     * @param string $key
+     *
+     * The return value can be:-
+     *   php bool false, internal Jansson object error
+     *   php int, 0 is success, -1 key not found.
+     *
+     * @\Jansson\Jansson::del()
+     *
+     * @return mixed
      */
-    public function del($string) {}
+    public function del($key) {}
     
     /**
      * Return the key/value pairs as a PHP array.
+     *
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $j->set('foo', 'bar');
+     * $a = $j->to_array();
+     * var_export($a);
+     * ```
+     *
+     * @\Jansson\Jansson::to_array();
+     *
+     * @return array
      */
     public function to_array() {}
     
     /**
      * Writes the key/value pairs as JSON to the PHP stream.
      * 
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $j->set('foo', 'bar');
+     * $j->to_stream(STDOUT);
+     * ```
+     *
+     * @\Jansson\Jansson::to_stream();
+     *
      * @param resource $stream The stream to output the JSON to.
      */
     public function to_stream($stream) {}
@@ -102,10 +186,21 @@ class Jansson
     /**
      * Reads the JSON byte stream from $stream and stores the key/value
      * pairs. Should always read a JSON object.
+     * Note, this operation is destructive for any existing key/value
+     * pairs already inside the object.
      * 
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $j->from_stream(STDIN);
+     * ```
      * @param type $stream
+     *
+     * @\Jansson\Jansson::from_stream();
+     *
      * @return bool true on sucess false on failure.
      */
     public function from_stream($stream) {}
     
 }
+
