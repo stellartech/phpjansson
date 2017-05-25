@@ -8,7 +8,7 @@
 
 namespace Jansson;
 
-class Jansson
+class Jansson implements Serializable, Countable
 {
     /**
      * If $init is an array it will be used to set key/value pairs. 

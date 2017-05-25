@@ -150,9 +150,3 @@ will output thus:-
 }
 ```
 
-### ToDo.
-
-Support debug info such as print\_r() and var\_export.
-
-
-

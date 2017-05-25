@@ -458,6 +458,29 @@ PHP_METHOD(jansson, to_array)
     }
 }
 
+static HashTable*
+jansson_get_debug_info(zval *obj, int *is_temp)
+{
+    zval z, *p_zval = NULL;
+    HashTable *p_rval = NULL;
+    php_jansson_t *p_this = Z_JANSSON_P(obj);
+
+    ALLOC_HASHTABLE(p_rval);
+    zend_hash_init(p_rval, 8, NULL, ZVAL_PTR_DTOR, 0);
+
+    if(p_this && p_this->p_json) {    
+        if((p_zval = jansson_to_zval(p_this->p_json, &z TSRMLS_CC)) != NULL) {
+            zend_string *p_name;
+            *is_temp = 1;
+            p_name = zend_string_init("[Internal Janson details]", sizeof("[Internal Janson details]")-1, 0);
+            //add_assoc_zval(p_rval, p_name, p_zval);
+            zend_hash_add_new(p_rval, p_name, p_zval);
+            zend_string_release(p_name);
+        }
+    }
+    return p_rval;
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_set, 0, 0, 1)
     ZEND_ARG_INFO(0, key_string)
     ZEND_ARG_INFO(0, variable_to_set)
@@ -869,6 +892,7 @@ PHP_MINIT_FUNCTION(jansson)
         sizeof(zend_object_handlers));
     jansson_object_handlers.clone_obj = jansson_clone_object;
     jansson_object_handlers.free_obj = jansson_free_object_storage_handler;
+    jansson_object_handlers.get_debug_info = jansson_get_debug_info;
 
     INIT_CLASS_ENTRY(tmp_ce, "JanssonGetException", NULL);
     jansson_get_exception_ce = zend_register_internal_class_ex(
