@@ -120,7 +120,36 @@ Jansson supports Jansson::serialize() and Jansson::unserialize()
 
 __Note__, this is not serialize/unserialize to PHP values. The serialization is done using JSON notation.
 
-These allow writing the contents to/from PHP value strings only rather than streams or arrays.
+These allow writing the contents to/from PHP value strings as well as streams and arrays.
+
+```
+<?php
+use Jansson\Jansson;
+$a = ['foo' => 'bar'];
+$j = new Jansson($a);
+$s = $j->serialize();
+echo $s;
+```
+will output thus:-
+```
+{"foo":"bar"}
+```
+
+```
+<?php
+use Jansson\Jansson;
+$a = ['foo' => 'bar'];
+$j = new Jansson;
+$s = '{"foo":"bar"}';
+$j->unserialize($s);
+$j->to_stream(STDOUT, Jansson::JSON_PRESERVE_ORDER, 4);
+```
+will output thus:-
+```
+{
+    "foo": "bar"
+}
+```
 
 ### ToDo.
 
