@@ -170,23 +170,31 @@ jansson_encode_zval_array_to_jansson(zval *inp_zval TSRMLS_DC)
 static json_t* 
 jansson_encode_zval_to_jansson(zval *inp_zval TSRMLS_DC) 
 {
-    switch(Z_TYPE_P(inp_zval)) {
-    case IS_STRING: 
-        return json_stringn(Z_STRVAL_P(inp_zval), Z_STRLEN_P(inp_zval));
-    case IS_LONG:
-        return json_integer(Z_LVAL_P(inp_zval));
-    case IS_NULL:
-        return json_null();
-    case IS_DOUBLE:
-        return json_real(Z_DVAL_P(inp_zval));
-    case _IS_BOOL:
-        return json_boolean(Z_LVAL_P(inp_zval) == 0 ? 0 : 1);
-    case IS_ARRAY:
-        return jansson_encode_zval_array_to_jansson(inp_zval TSRMLS_CC);
-    case IS_OBJECT:
-        return jansson_encode_zval_object_to_jansson(inp_zval TSRMLS_CC);
-    default:
-        return NULL;
+    again:
+    while(1) {
+        switch(Z_TYPE_P(inp_zval)) {
+        case IS_STRING: 
+            return json_stringn(Z_STRVAL_P(inp_zval), Z_STRLEN_P(inp_zval));
+        case IS_LONG:
+            return json_integer(Z_LVAL_P(inp_zval));
+        case IS_NULL:
+            return json_null();
+        case IS_DOUBLE:
+            return json_real(Z_DVAL_P(inp_zval));
+        case IS_TRUE:
+            return json_boolean(1);
+        case IS_FALSE:
+            return json_boolean(0);
+        case IS_ARRAY:
+            return jansson_encode_zval_array_to_jansson(inp_zval TSRMLS_CC);
+        case IS_OBJECT:
+            return jansson_encode_zval_object_to_jansson(inp_zval TSRMLS_CC);
+        case IS_REFERENCE:
+            inp_zval = Z_REFVAL_P(inp_zval);
+            break;
+        default:
+            return NULL;
+        }
     }
     return NULL;
 }
