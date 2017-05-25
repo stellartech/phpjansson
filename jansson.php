@@ -16,8 +16,31 @@ class Jansson
      * and stored. Should always read a JSON object of key/value pairs. 
      * If the stream is invalid JSON then an exception will be thrown.
      * 
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $j->set('foo', 'bar');
+     * $j->to_stream(STDOUT);
+     * ```
+     * ```php 
+     * use Jansson\Jansson;
+     *
+     * $j = new Jansson(STDIN);
+     * $j->to_stream(STDOUT);
+     * ``` 
+     * ```php
+     * use Jansson\Jansson;
+     * $a = ['foo' => 'bar'];
+     * $j = new Jansson($a);
+     * $j->to_stream(STDOUT);
+     * ```
+     *
      * @param mixed $init Used to set key/value pairs
      * @throws JanssonConstructorException
+     *
+     * @\Jansson\Jansson\__construct()
+     *
+     * @return Jansson object
      */
     public function __construct($init = null) {}
     

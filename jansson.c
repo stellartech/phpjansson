@@ -36,6 +36,7 @@ PHPAPI zend_class_entry *jansson_ce;
 static zend_object_handlers jansson_object_handlers;
 
 PHPAPI zend_class_entry *jansson_get_exception_ce;
+PHPAPI zend_class_entry *jansson_stream_exception_ce;
 PHPAPI zend_class_entry *jansson_constructor_exception_ce;
 
 typedef struct _php_jansson_t
@@ -816,10 +817,14 @@ PHP_MINIT_FUNCTION(jansson)
     jansson_get_exception_ce = zend_register_internal_class_ex(
             &tmp_ce, p_exception_ce);
     
+    INIT_CLASS_ENTRY(tmp_ce, "JanssonStreamException", NULL);
+    jansson_stream_exception_ce = zend_register_internal_class_ex(
+            &tmp_ce, p_exception_ce);
+    
     INIT_CLASS_ENTRY(tmp_ce, "JanssonConstructorException", NULL);
     jansson_constructor_exception_ce = zend_register_internal_class_ex(
             &tmp_ce, p_exception_ce);
-    
+
     zend_declare_class_constant_long(jansson_ce, 
             ZEND_STRL("JSON_COMPACT"), 
             JSON_COMPACT TSRMLS_CC);

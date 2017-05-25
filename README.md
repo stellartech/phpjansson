@@ -44,3 +44,57 @@ standard malloc/free memory allocation and therefore removing PHP's memory
 limit and only restricting you to your server's memory limitations. Note,
 this INI setting can only be set system wide and not a run time. An Apache/FPM
 full restart is required when changing this setting.
+
+
+## Usage
+
+### Create a simple JANSSON object
+
+```
+<?php
+use Jansson\Jansson;
+
+$j = new Jansson;
+$j->set("key1", "bar1");
+$j->set("key2", "bar2");
+$j->to_stream(STDOUT, Jansson::JSON_PRESERVE_ORDER, 4);
+```
+The above snippet will output (insert order is preserved and indent of 4 spaces):-
+```
+{
+    "key1": "bar1",
+    "key2": "bar2"
+}
+```
+_Note_, the Jansson::to_stream() method is very memory efficient as the JSON stream is built directly to the output stream thus avoiding dymanic building a char buffer in memory to send to the stream on completion.
+
+### Create a simple JANSSON object from an input stream
+
+```
+<?php
+use Jansson\Jansson;
+
+$j = new Jansson;
+$j->from_stream(STDIN);
+$j->to_stream(STDOUT, Jansson::JSON_PRESERVE_ORDER, 4);
+```
+Run thus:-
+```
+$ echo '{"foo":"bar"}' | php example.php
+```
+will output thus:-
+```
+{
+    "foo": "bar"
+}
+```
+(_Note_, Jansson::from_stream() is destructive for any elements that were previously added to the JANSSON object)
+
+### jansson.php
+
+See the jansson.php file which is designed to assist your IDE with hints and tool tips.
+
+
+
+
+
