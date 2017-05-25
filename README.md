@@ -2,7 +2,7 @@
 A wrapper class for the Jansson C library.
 
 The PHP class Jansson\Jansson is a wrapper around a JSON object key/value
-store. Unlike PHP's json_encode() function Jansson\Jansson streams it's
+store. Unlike PHP's json\_encode() function Jansson\Jansson streams it's
 encoded output direct to a PHP stream thus avoiding the memory consuming
 process of converting a PHP array into a JSON string and then sending that
 PHP string to output (which if output buffering is in use means sending a 
@@ -66,7 +66,7 @@ The above snippet will output (insert order is preserved and indent of 4 spaces)
     "key2": "bar2"
 }
 ```
-_Note_, the Jansson::to_stream() method is very memory efficient as the JSON stream is built directly to the output stream thus avoiding dymanic building a char buffer in memory to send to the stream on completion.
+_Note_, the Jansson::to\_stream() method is very memory efficient as the JSON stream is built directly to the output stream thus avoiding dymanic building a char buffer in memory to send to the stream on completion.
 
 ### Create a simple JANSSON object from an input stream
 
@@ -88,13 +88,37 @@ will output thus:-
     "foo": "bar"
 }
 ```
-(_Note_, Jansson::from_stream() is destructive for any elements that were previously added to the JANSSON object)
+(_Note_, Jansson::from\_stream() is destructive for any elements that were previously added to the JANSSON object)
+
+### Jansson and PHP arrays
+
+```
+<?php
+use Jansson\Jansson;
+
+$a = ['foo' => 'bar'];
+$j = new Jansson($a);
+$j->to_stream(STDOUT, Jansson::JSON_PRESERVE_ORDER, 4);
+```
+will output thus:-
+```
+{
+    "foo": "bar"
+}
+```
+
+Jansson also supports ::to\_array() to convert it's internal state into a PHP array.
+
 
 ### jansson.php
 
 See the jansson.php file which is designed to assist your IDE with hints and tool tips.
 
+### ToDo.
 
+Support the Serializable interface (since the to\_\* and from\_\* natively methods do this for Json).
+
+Support debug info such as print\_r() and var\_export.
 
 
 
