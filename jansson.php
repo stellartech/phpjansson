@@ -110,7 +110,7 @@ class Jansson
      * $j = new Jansson(STDIN);
      * try {
      *     $var = $j->get('foo');
-           echo $var;
+     *     echo $var;
      * } 
      * catch(JanssonGetException $e) {
      *     echo "key 'foo' didn't exist\n";
