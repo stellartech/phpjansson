@@ -756,6 +756,50 @@ PHP_METHOD(jansson, unserialize)
 }
 
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_from_array, 0, 0, 1)
+    ZEND_ARG_INFO(0, array)
+ZEND_END_ARG_INFO()
+PHP_METHOD(jansson, from_array)
+{
+    zval *inp_zval = NULL;
+
+    return_value = getThis();
+    
+    if(ZEND_NUM_ARGS() != 1) {
+        return;
+    }
+    else {    
+        if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", 
+                &inp_zval) == FAILURE) {
+            return;
+        }
+        
+        if(!inp_zval) {
+            return;
+        }
+    }
+    
+    if(inp_zval && Z_TYPE_P(inp_zval) == IS_ARRAY) {
+        json_t *p_json;
+        php_jansson_t *p_this;
+        
+        p_this = Z_JANSSON_P(getThis());
+        if(!p_this) {
+            return;
+        }
+        if(p_this->p_json) {
+            json_decref(p_this->p_json);
+            p_this->p_json = NULL;
+        }
+        p_json = jansson_encode_zval_array_to_jansson(inp_zval TSRMLS_CC);    
+        p_this->p_json = p_json ? p_json : json_object();
+    }
+    else {
+        zend_throw_exception(jansson_constructor_exception_ce,
+            "Jansson::from_array() failed to load from array", 0 TSRMLS_CC);
+    }
+}
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_construct, 0, 0, 1)
     ZEND_ARG_INFO(0, array)
 ZEND_END_ARG_INFO()
@@ -818,6 +862,8 @@ zend_function_entry jansson_methods[] =
             arginfo_jansson_method_set, ZEND_ACC_PUBLIC)                
     PHP_ME(jansson, to_array, 
             arginfo_jansson_method_to_array, ZEND_ACC_PUBLIC)                        
+    PHP_ME(jansson, from_array, 
+            arginfo_jansson_method_from_array, ZEND_ACC_PUBLIC)                        
     PHP_ME(jansson, to_stream, 
             arginfo_jansson_method_to_stream, ZEND_ACC_PUBLIC)                
     PHP_ME(jansson, from_stream, 

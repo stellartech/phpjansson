@@ -151,7 +151,7 @@ class Jansson implements Serializable, Countable
     public function del($key) {}
     
     /**
-     * Return the key/value pairs as a PHP array.
+     * Converts internal JSON representation to PHP array.
      *
      * ```php
      * use Jansson\Jansson;
@@ -166,6 +166,23 @@ class Jansson implements Serializable, Countable
      * @return array
      */
     public function to_array() {}
+    
+    /**
+     * Loads self from PHP array.
+     *
+     * ```php
+     * use Jansson\Jansson;
+     * $a = ['foo' => 'bar'];
+     * $j = new Jansson;
+     * $j->from_array($a);
+     * print_r($j);
+     * ```
+     *
+     * @\Jansson\Jansson::from_array();
+     *
+     * @return array
+     */
+    public function from_array() {}
     
     /**
      * Writes the key/value pairs as JSON to the PHP stream.
