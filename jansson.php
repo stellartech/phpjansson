@@ -4,6 +4,10 @@
  * Used for your IDE and documents the internal Jansson\Jansson class.
  * Do not include this at runtime, just have in your project for your
  * IDE to read and provide tooltips etc.
+ *
+ * Note, when comparing two Jansson objects with == then the outcome 
+ * of the operation is as defined in the Jansson docs here:-
+ *    https://jansson.readthedocs.io/en/2.10/apiref.html#equality
  */
 
 namespace Jansson;
@@ -15,6 +19,8 @@ class Jansson implements Serializable, Countable
      * If $init is a PHP stream byte stream of JSON it will be read 
      * and stored. Should always read a JSON object of key/value pairs. 
      * If the stream is invalid JSON then an exception will be thrown.
+     * If $init is a string then ::unserialize() is used to initialize
+     * the object. The string is expected to be a valid JSON string.
      * 
      * ```php
      * use Jansson\Jansson;
@@ -146,7 +152,7 @@ class Jansson implements Serializable, Countable
      *
      * @\Jansson\Jansson::del()
      *
-     * @return mixed
+     * @return integer 0 on success, -1 on key not found.
      */
     public function del($key) {}
     
@@ -218,6 +224,51 @@ class Jansson implements Serializable, Countable
      * @return bool true on sucess false on failure.
      */
     public function from_stream($stream) {}
+    
+    /**
+     * serialize(), creates a string representation of the JSON.
+     *
+     * ```php
+     * use Jansson\Jansson;
+     * $j = new Jansson;
+     * $s = $j->serialize;
+     * echo $s;
+     * ```
+     *
+     * @\Jansson\Jansson::serialize();
+     *
+     * @Return string 
+     */
+    public function serialize() {}
+    
+    /**
+     * unserialize(), from a JSON string, build out this JANSSON object.
+     * Note, this is destructive, any previously set or loaded JSON
+     * elements are first deleted/cleaned out.
+     * 
+     * @param type $string
+     *
+     * @\Jansson\Jansson::unserialize();
+     */
+    public function unserialize($string) {}
+    
+    /**
+     * Alias of serialize()
+     *
+     * @\Jansson\Jansson::to_string();
+     *
+     * @Return string 
+     */
+    public function to_string() {}
+    
+    /**
+     * Alias of unserialize()
+     * 
+     * @param type $string
+     *
+     * @\Jansson\Jansson::from_string();
+     */
+    public function from_string($string) {}
     
 }
 

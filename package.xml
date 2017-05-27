@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<package packagerversion="1.0.0" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>jansson</name>
+ <channel>pecl.php.net</channel>
+ <summary>PHP binding for Jansson</summary>
+ <description>This extension uses libjansson library to provide API for managing JSON objects.</description>
+ <lead>
+  <name>Andy Kirkham</name>
+  <user></user>
+  <email>andy@spiders-lair.com</email>
+  <active>no</active>
+ </lead>
+ <date>2017-05-27</date>
+ <time>12:00:00</time>
+ <version>
+  <release>1.0.0</release>
+  <api>1.0.0</api>
+ </version>
+ <stability>
+  <release>stable</release>
+  <api>stable</api>
+ </stability>
+ <license uri="http://www.php.net/license">PHP</license>
+ <notes>
+ </notes>
+ <contents>
+  <dir name="/">
+   <file name="README.md" role="doc" />
+   <file name="LICENSE" role="doc" />
+   <file name="config.m4" role="src" />
+   <file name="jansson.c" role="src" />
+   <file name="jansson.h" role="src" />
+   <file name="jansson.php" role="doc" />
+   <file name="php_jansson.h" role="src" />
+   <file name="tests/basic.phpt" role="test" />
+   <file name="tests/class_constants.phpt" role="test" />
+   <file name="tests/equality.phpt" role="test" />
+   <file name="tests/errors.phpt" role="test" />
+   <file name="tests/jansson_indent.phpt" role="test" />
+   <file name="tests/multiple.phpt" role="test" />
+   <file name="tests/serializable.phpt" role="test" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>7.1.0</min>
+    <max>7.1.5</max>
+    <exclude>6.0.0</exclude>
+   </php>
+   <pearinstaller>
+    <min>1.4.0b1</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>jansson</providesextension>
+ <extsrcrelease />
+ <changelog>
+  <release>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <version>
+    <release>1.0.0</release>
+    <api>1.0.0</api>
+   </version>
+   <date>2017-05-27</date>
+  </release>
+ </changelog>
+</package>

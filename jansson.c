@@ -337,11 +337,15 @@ PHP_METHOD(jansson, count)
     php_jansson_t *p_this;
     
     if(zend_parse_parameters_none() == FAILURE) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::count() does not take parameters");
         return;
     }
     
     p_this = Z_JANSSON_P(getThis());
     if(!p_this || !p_this->p_json || json_typeof(p_this->p_json) != JSON_OBJECT) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::count() internal error");
         return;
     }
     
@@ -364,6 +368,8 @@ PHP_METHOD(jansson, has)
     
     p_this = Z_JANSSON_P(getThis());
     if(!p_this) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::count() internal error");
         return;
     }
     
@@ -413,6 +419,10 @@ PHP_METHOD(jansson, get)
             }
         }
     }
+    else {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::get() internal error");
+    }
 }
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_jansson_method_del, 0, 0, 1)
@@ -431,10 +441,12 @@ PHP_METHOD(jansson, del)
 
     p_this = Z_JANSSON_P(getThis());
     if(p_this != NULL) { 
-        char *p_key = estrndup(inp_key, klen);
-        rval = json_object_del(p_this->p_json, p_key);
-        efree(p_key);
+        rval = json_object_del(p_this->p_json, inp_key);
         RETURN_LONG(rval);
+    }
+    else {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::del() internal error");
     }
     RETURN_FALSE;
 }
@@ -455,6 +467,10 @@ PHP_METHOD(jansson, to_array)
         if((p_zval = jansson_to_zval(p_this->p_json, &z TSRMLS_CC)) != NULL) {
             ZVAL_ZVAL(return_value, p_zval, 0, 1);
         }
+    }
+    else {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::to_array() internal error");
     }
 }
 
@@ -478,6 +494,10 @@ jansson_get_debug_info(zval *obj, int *is_temp)
             zend_string_release(p_name);
         }
     }
+    else {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::get_debug_info() internal error");
+    }
     return p_rval;
 }
 
@@ -498,21 +518,24 @@ PHP_METHOD(jansson, set)
         Z_PARAM_ZVAL(inp_zval)
     ZEND_PARSE_PARAMETERS_END();
 
-    p_json = jansson_encode_zval_to_jansson(inp_zval TSRMLS_CC);
-    if(!p_json) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING , "jansson_encode_zval_to_jansson() failed");
-        RETURN_FALSE;
-    }
-    
     p_this = Z_JANSSON_P(getThis());
     if(!p_this) {
-        json_decref(p_json);
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::get_debug_info() internal error");
+        return;
+    }
+
+    p_json = jansson_encode_zval_to_jansson(inp_zval TSRMLS_CC);
+    if(!p_json) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING , 
+           "jansson::set() jansson_encode_zval_to_jansson() failed");
         RETURN_FALSE;
     }
     
     if(jansson_set_value(p_this->p_json, inp_key, klen, p_json TSRMLS_CC) != SUCCESS) {
         json_decref(p_json);
-        php_error_docref(NULL TSRMLS_CC, E_WARNING , "jansson_set_value() failed");
+        php_error_docref(NULL TSRMLS_CC, E_WARNING , 
+            "jansson::set() jansson_set_value() failed");
         RETURN_FALSE;
     }
     RETURN_TRUE;
@@ -523,6 +546,9 @@ typedef struct _jansson_stream_resource {
     json_t          *p_json;
     php_stream      *p_stream;
     php_jansson_t   *p_this;
+#ifdef ZTS
+    TSRMLS_D;
+#endif
 } jansson_stream_resource_t;
 
 static int
@@ -568,12 +594,14 @@ PHP_METHOD(jansson, to_stream)
     php_stream_from_zval(resource.p_stream, inp_zval_dst);
     if(!resource.p_stream) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, 
-            "Parameter is not a stream");
+            "jansson::to_stream() Parameter is not a stream");
         RETURN_FALSE;
     }
     
     resource.p_this = Z_JANSSON_P(getThis());
     if(!resource.p_this) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING,
+            "jansson::to_stream() Internal error");
         RETURN_FALSE;
     }
     
@@ -596,7 +624,7 @@ PHP_METHOD(jansson, to_stream)
     if(json_dump_callback(resource.p_this->p_json, 
             _jansson_to_stream_callback, &resource, flags) != SUCCESS) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, 
-                "json_dump_callback failed");
+                "jansson::to_stream() json_dump_callback failed");
         RETURN_FALSE;
     }
     
@@ -633,7 +661,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     php_stream_from_zval(resource.p_stream, inp_zval_src);
     if(!resource.p_stream) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING , 
-            "Parameter is not a stream");
+            "jansson::_jansson_from_stream() Parameter is not a stream");
         if(return_value) {
             RETURN_FALSE;
         }
@@ -659,7 +687,8 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     
     if(p_json == NULL) {
         if(with_warn) {
-            php_error_docref(NULL TSRMLS_CC, E_WARNING , 
+            php_error_docref(NULL TSRMLS_CC, E_WARNING, 
+                "jansson::_jansson_from_stream() "
                 "json_load_callback() failed: '%s' at line %d, column %d, pos %d", 
                 err.text, err.line, err.column, err.position);
         }
@@ -672,7 +701,8 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     if(json_typeof(p_json) != JSON_OBJECT) {
         json_decref(p_json);
         if(with_warn) {
-            php_error_docref(NULL TSRMLS_CC, E_WARNING , 
+            php_error_docref(NULL TSRMLS_CC, E_WARNING, 
+                "jansson::_jansson_from_stream() "
                 "json_load_callback() did not load an json object");
         }
         if(return_value) {
@@ -705,8 +735,6 @@ PHP_METHOD(jansson, from_stream)
         RETURN_FALSE;
     }
     
-    //_jansson_from_stream(inp_zval_src, 
-    //        flags, return_value, getThis(), 0 TSRMLS_CC);
     _jansson_from_stream(inp_zval_src, 
             flags, return_value, Z_JANSSON_P(getThis()), 0 TSRMLS_CC);
 }
@@ -751,8 +779,17 @@ PHP_METHOD(jansson, unserialize)
         return;
     }
 
-    if(p_this->p_json) json_decref(p_this->p_json);
+    if(p_this->p_json) {
+        json_decref(p_this->p_json);
+        p_this->p_json = NULL; 
+    }
     p_this->p_json = json_loads(inp_string, 0, &err);
+    if(!p_this->p_json) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING ,
+            "Jansson::unserialize() failed: '%s' at line %d, column %d, pos %d",
+            err.text, err.line, err.column, err.position);
+        p_this->p_json = json_object();
+    }
 }
 
 
@@ -763,20 +800,15 @@ PHP_METHOD(jansson, from_array)
 {
     zval *inp_zval = NULL;
 
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(inp_zval)
+    ZEND_PARSE_PARAMETERS_END();
+
     return_value = getThis();
     
     if(ZEND_NUM_ARGS() != 1) {
         return;
-    }
-    else {    
-        if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", 
-                &inp_zval) == FAILURE) {
-            return;
-        }
-        
-        if(!inp_zval) {
-            return;
-        }
     }
     
     if(inp_zval && Z_TYPE_P(inp_zval) == IS_ARRAY) {
@@ -807,27 +839,43 @@ PHP_METHOD(jansson, __construct)
 {
     zval *inp_zval = NULL;
 
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(inp_zval)
+    ZEND_PARSE_PARAMETERS_END();
+
     return_value = getThis();
     
     if(ZEND_NUM_ARGS() != 1) {
         return;
     }
-    else {    
-        if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", 
-                &inp_zval) == FAILURE) {
-            return;
-        }
-        
-        if(!inp_zval) {
-            return;
-        }
-    }
-    
+
     if(inp_zval && Z_TYPE_P(inp_zval) == IS_RESOURCE) {
         if(_jansson_from_stream(inp_zval, 0, NULL, Z_JANSSON_P(getThis()), 0 TSRMLS_CC) != SUCCESS) {
             zend_throw_exception(jansson_constructor_exception_ce, 
                 "Jansson::__construct() failed to load from stream", 0 TSRMLS_CC);
         }
+    }
+    else if(inp_zval && Z_TYPE_P(inp_zval) == IS_STRING) {
+        json_t *p_json;
+        json_error_t err;
+        php_jansson_t *p_this = Z_JANSSON_P(getThis());
+        if(!p_this) {
+            zend_throw_exception(jansson_constructor_exception_ce,
+                "Jansson::__construct() internal error", 0 TSRMLS_CC); 
+            return;
+        }
+        if(p_this->p_json) {
+            json_decref(p_this->p_json);
+            p_this->p_json = NULL;
+        }
+        p_json = json_loads(Z_STRVAL_P(inp_zval), 0, &err);
+        if(!p_json) {
+            php_error_docref(NULL TSRMLS_CC, E_WARNING,
+                "Jansson::__construct() failed: '%s' at line %d, column %d, pos %d",
+                err.text, err.line, err.column, err.position);
+        }
+        p_this->p_json = p_json ? p_json : json_object();
     }
     else if(inp_zval && Z_TYPE_P(inp_zval) == IS_ARRAY) {
         json_t *p_json;
@@ -835,6 +883,8 @@ PHP_METHOD(jansson, __construct)
         
         p_this = Z_JANSSON_P(getThis());
         if(!p_this) {
+            zend_throw_exception(jansson_constructor_exception_ce,
+                "Jansson::__construct() internal error", 0 TSRMLS_CC);
             return;
         }
         if(p_this->p_json) {
@@ -842,6 +892,10 @@ PHP_METHOD(jansson, __construct)
             p_this->p_json = NULL;
         }
         p_json = jansson_encode_zval_array_to_jansson(inp_zval TSRMLS_CC);    
+        if(!p_json) {
+            zend_throw_exception(jansson_constructor_exception_ce,
+                "Jansson::__construct() failed to load from array", 0 TSRMLS_CC);
+        }
         p_this->p_json = p_json ? p_json : json_object();
     }
 }
@@ -872,6 +926,10 @@ zend_function_entry jansson_methods[] =
             arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)                        
     PHP_ME(jansson, unserialize, 
             arginfo_jansson_method_unserialize, ZEND_ACC_PUBLIC)                        
+    PHP_MALIAS(jansson, to_string, serialize,
+            arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)
+    PHP_MALIAS(jansson, from_string, unserialize,
+            arginfo_jansson_method_unserialize, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 
@@ -907,6 +965,29 @@ jansson_create_object_handler(zend_class_entry *inp_class_type TSRMLS_DC)
     return &p_intern->std;
 }
 
+static int
+jansson_compare_objects(zval *res, zval *op1, zval *op2)
+{
+    php_jansson_t *p_this = Z_JANSSON_P(op1);
+    php_jansson_t *p_that = Z_JANSSON_P(op2);
+    if(p_this && p_that && p_this->p_json && p_that->p_json) {
+        if(p_this->p_json == p_that->p_json) {
+            ZVAL_BOOL(res, 0);
+            return SUCCESS;
+        }
+        if(1 == json_equal(p_this->p_json, p_that->p_json)) {
+            ZVAL_BOOL(res, 0);
+            return SUCCESS;
+        }
+        else {
+            ZVAL_BOOL(res, 1);
+            return SUCCESS;
+        }
+    }
+    ZVAL_BOOL(res, 1);
+    return FAILURE;
+}
+
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("jansson.use_php_memory", "1", PHP_INI_SYSTEM,        
         OnUpdateLong, use_php_memory, zend_jansson_globals, jansson_globals)
@@ -938,6 +1019,7 @@ PHP_MINIT_FUNCTION(jansson)
         sizeof(zend_object_handlers));
     jansson_object_handlers.clone_obj = jansson_clone_object;
     jansson_object_handlers.free_obj = jansson_free_object_storage_handler;
+    jansson_object_handlers.compare = jansson_compare_objects;
     jansson_object_handlers.get_debug_info = jansson_get_debug_info;
 
     INIT_CLASS_ENTRY(tmp_ce, "JanssonGetException", NULL);
