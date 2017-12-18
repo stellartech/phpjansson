@@ -902,6 +902,22 @@ PHP_METHOD(jansson, __construct)
 
 ZEND_BEGIN_ARG_INFO(arginfo_jansson_method_jsonserialize, 0)
 ZEND_END_ARG_INFO()
+PHP_METHOD(jansson, jsonSerialize)
+{
+    zval z, *p_zval;
+    php_jansson_t *p_this;
+
+    if(zend_parse_parameters_none() == FAILURE) {
+        return;
+    }
+
+    p_this = Z_JANSSON_P(getThis());
+    if(p_this != NULL) {
+        if((p_zval = jansson_to_zval(p_this->p_json, &z TSRMLS_CC)) != NULL) {
+            ZVAL_ZVAL(return_value, p_zval, 0, 1);
+        }
+    }    
+}
 
 zend_function_entry jansson_methods[] = 
 {
@@ -929,7 +945,7 @@ zend_function_entry jansson_methods[] =
             arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)                        
     PHP_ME(jansson, unserialize, 
             arginfo_jansson_method_unserialize, ZEND_ACC_PUBLIC)                        
-    PHP_MALIAS(jansson, jsonSerialize, serialize,
+    PHP_ME(jansson, jsonSerialize, 
             arginfo_jansson_method_jsonserialize, ZEND_ACC_PUBLIC)	    
     PHP_MALIAS(jansson, to_string, serialize,
             arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)
