@@ -900,6 +900,9 @@ PHP_METHOD(jansson, __construct)
     }
 }
 
+ZEND_BEGIN_ARG_INFO(arginfo_jansson_method_jsonserialize, 0)
+ZEND_END_ARG_INFO()
+
 zend_function_entry jansson_methods[] = 
 {
     PHP_ME(jansson, __construct, 
@@ -927,7 +930,7 @@ zend_function_entry jansson_methods[] =
     PHP_ME(jansson, unserialize, 
             arginfo_jansson_method_unserialize, ZEND_ACC_PUBLIC)                        
     PHP_MALIAS(jansson, jsonSerialize, serialize,
-            arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)	    
+            arginfo_jansson_method_jsonserialize, ZEND_ACC_PUBLIC)	    
     PHP_MALIAS(jansson, to_string, serialize,
             arginfo_jansson_method_serialize, ZEND_ACC_PUBLIC)
     PHP_MALIAS(jansson, from_string, unserialize,
@@ -997,7 +1000,7 @@ PHP_INI_BEGIN()
         OnUpdateLong, seed, zend_jansson_globals, jansson_globals)
 PHP_INI_END()
 
-extern PHPAPI zend_class_entry *zend_ce_JsonSerializable;
+extern PHPAPI zend_class_entry *php_json_serializable_ce;
 
 PHP_MINIT_FUNCTION(jansson)
 {
@@ -1018,7 +1021,7 @@ PHP_MINIT_FUNCTION(jansson)
     jansson_ce = zend_register_internal_class(&ce TSRMLS_CC);
     zend_class_implements(jansson_ce TSRMLS_CC, 1, spl_ce_Countable);
     zend_class_implements(jansson_ce TSRMLS_CC, 1, spl_ce_Serializable);
-    zend_class_implements(jansson_ce TSRMLS_CC, 1, zend_ce_JsonSerializable);
+    zend_class_implements(jansson_ce TSRMLS_CC, 1, php_json_serializable_ce);
     memcpy(&jansson_object_handlers, zend_get_std_object_handlers(),
         sizeof(zend_object_handlers));
     jansson_object_handlers.clone_obj = jansson_clone_object;

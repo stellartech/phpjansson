@@ -35,4 +35,4 @@ php_test_results_*
 tmp-php.ini
 *.tgz
 nbproject
-
+configure.ac
