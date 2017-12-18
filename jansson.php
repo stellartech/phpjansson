@@ -12,7 +12,7 @@
 
 namespace Jansson;
 
-class Jansson implements Serializable, Countable
+class Jansson implements Serializable, Countable, JsonSerializable
 {
     /**
      * If $init is an array it will be used to set key/value pairs. 
