@@ -655,7 +655,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     jansson_stream_resource_t resource;
     
     if(Z_TYPE_P(inp_zval_src) != IS_RESOURCE) {
-        return;
+        RETURN_FALSE;
     }
     
     php_stream_from_zval(resource.p_stream, inp_zval_src);
