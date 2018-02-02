@@ -206,8 +206,11 @@ jansson_to_zval(json_t *inp_json, zval *outp_zval TSRMLS_DC)
         ZVAL_STRINGL(outp_zval, json_string_value(inp_json),
             json_string_length(inp_json));
         break;
-    case JSON_INTEGER:
-        ZVAL_LONG(outp_zval, json_interger_value(inp_json));
+    case JSON_INTEGER: {
+	    zend_long l;
+	    l = (zend_long)json_interger_value(inp_json);
+            ZVAL_LONG(outp_zval, l);
+    	}
         break; 
     case JSON_REAL:
         ZVAL_DOUBLE(outp_zval, json_real_value(inp_json));
