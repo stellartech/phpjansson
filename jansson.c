@@ -206,11 +206,8 @@ jansson_to_zval(json_t *inp_json, zval *outp_zval TSRMLS_DC)
         ZVAL_STRINGL(outp_zval, json_string_value(inp_json),
             json_string_length(inp_json));
         break;
-    case JSON_INTEGER: {
-	    zend_long l;
-	    l = (zend_long)json_interger_value(inp_json);
-            ZVAL_LONG(outp_zval, l);
-    	}
+    case JSON_INTEGER:
+        ZVAL_LONG(outp_zval, json_integer_value(inp_json));
         break; 
     case JSON_REAL:
         ZVAL_DOUBLE(outp_zval, json_real_value(inp_json));
@@ -658,7 +655,10 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     jansson_stream_resource_t resource;
     
     if(Z_TYPE_P(inp_zval_src) != IS_RESOURCE) {
-        RETURN_FALSE;
+	if(return_value) {
+		RETVAL_FALSE;    
+	}
+        return FAILURE;
     }
     
     php_stream_from_zval(resource.p_stream, inp_zval_src);
@@ -666,7 +666,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
         php_error_docref(NULL TSRMLS_CC, E_WARNING , 
             "jansson::_jansson_from_stream() Parameter is not a stream");
         if(return_value) {
-            RETURN_FALSE;
+            RETVAL_FALSE;
         }
         return FAILURE;
     }
@@ -674,7 +674,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     resource.p_this = this_ptr;
     if(!resource.p_this) {
         if(return_value) {
-            RETURN_FALSE;
+            RETVAL_FALSE;
         }
         return FAILURE;
     }
@@ -696,7 +696,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
                 err.text, err.line, err.column, err.position);
         }
         if(return_value) {
-            RETURN_FALSE;
+            RETVAL_FALSE;
         }
         return FAILURE;
     }
@@ -709,7 +709,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
                 "json_load_callback() did not load an json object");
         }
         if(return_value) {
-            RETURN_FALSE;
+            RETVAL_FALSE;
         }
         return FAILURE;
     }
@@ -719,7 +719,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
     }
     resource.p_this->p_json = p_json;
     if(return_value) {
-        RETURN_LONG(resource.byte_count);        
+	RETVAL_LONG(resource.byte_count);    
     }
     return SUCCESS;
 }
