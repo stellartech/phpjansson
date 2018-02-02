@@ -973,7 +973,7 @@ jansson_clone_object(zval *inp_zval)
 
     p_intern = Z_JANSSON_P(inp_zval);
     p_new_obj = jansson_ce->create_object(Z_OBJCE_P(inp_zval));
-    zend_object_clone_members(&p_new_intern->std, &p_intern->std);
+    zend_objects_clone_members(&p_new_intern->std, &p_intern->std);
     p_new_intern->p_json = json_deep_copy(p_intern->p_json);
 
     return p_new_obj;
