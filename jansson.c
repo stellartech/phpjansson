@@ -661,7 +661,16 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
         return FAILURE;
     }
     
-    php_stream_from_zval(resource.p_stream, inp_zval_src);
+    // This macro contains RETURN_FALSE so we must expand it
+    // ourselves to avoid the compiler warning. The macro is
+    // designed to be used in a PHP function or method so we 
+    // cannot use it in a C function context.
+    //php_stream_from_zval(resource.p_stream, inp_zval_src);
+    resource.p_stream = (php_stream*)zend_fetch_resource2_ex(
+        inp_zval_src, "stream", 
+	php_file_le_stream(), 
+	php_file_le_pstream()
+    );
     if(!resource.p_stream) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING , 
             "jansson::_jansson_from_stream() Parameter is not a stream");
