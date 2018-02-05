@@ -661,6 +661,14 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
         return FAILURE;
     }
     
+    if(!this_ptr) {
+        if(return_value) {
+            RETVAL_FALSE;
+        }
+        return FAILURE;	    
+    }
+    resource.p_this = this_ptr;
+	
     // This macro contains RETURN_FALSE so we must expand it
     // ourselves to avoid the compiler warning. The macro is
     // designed to be used in a PHP function or method so we 
@@ -679,15 +687,7 @@ _jansson_from_stream(zval *inp_zval_src, size_t flags,
         }
         return FAILURE;
     }
-    
-    resource.p_this = this_ptr;
-    if(!resource.p_this) {
-        if(return_value) {
-            RETVAL_FALSE;
-        }
-        return FAILURE;
-    }
-    
+
 #ifdef ZTS
     resource.TSRMLS_C = TSRMLS_C;
 #endif
